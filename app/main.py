@@ -1,6 +1,7 @@
-number = int(input("Enter a number: "))
+a = float(input("Enter first number: "))
+b = float(input("Enter second number: "))
 
-if number % 2 == 0:
-    print("Even")
-else:
-    print("Odd")
+print("Sum:", a + b)
+print("Difference:", a - b)
+print("Product:", a * b)
+print("Division:", a / b)
