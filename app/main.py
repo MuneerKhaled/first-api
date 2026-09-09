@@ -1,53 +1,80 @@
-from fastapi import FastAPI
+```python
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-app = FastAPI(title="Task Manager API")
+app = FastAPI(title="Todo Management API")
 
 
-class Task(BaseModel):
+class Todo(BaseModel):
     title: str
     description: str
     completed: bool = False
 
 
-tasks = []
+todo_list = []
+next_id = 1
 
 
 @app.get("/")
-def home():
-    return {"message": "Task Manager API is running!"}
+def root():
+    return {"status": "Todo API is working"}
 
 
-@app.get("/tasks")
-def get_tasks():
-    return tasks
-
-
-@app.post("/tasks")
-def create_task(task: Task):
-    tasks.append(task)
+@app.get("/todos")
+def list_todos():
     return {
-        "message": "Task created successfully",
-        "task": task
+        "total": len(todo_list),
+        "todos": todo_list
     }
 
 
-@app.get("/tasks/{task_id}")
-def get_task(task_id: int):
-    if task_id >= len(tasks):
-        return {"error": "Task not found"}
+@app.post("/todos")
+def add_todo(todo: Todo):
+    global next_id
 
-    return tasks[task_id]
+    new_todo = {
+        "id": next_id,
+        "title": todo.title,
+        "description": todo.description,
+        "completed": todo.completed
+    }
 
-
-@app.delete("/tasks/{task_id}")
-def delete_task(task_id: int):
-    if task_id >= len(tasks):
-        return {"error": "Task not found"}
-
-    deleted_task = tasks.pop(task_id)
+    todo_list.append(new_todo)
+    next_id += 1
 
     return {
-        "message": "Task deleted successfully",
-        "task": deleted_task
+        "message": "Todo added",
+        "data": new_todo
     }
+
+
+@app.get("/todos/{todo_id}")
+def find_todo(todo_id: int):
+
+    for todo in todo_list:
+        if todo["id"] == todo_id:
+            return todo
+
+    raise HTTPException(
+        status_code=404,
+        detail="Todo not found"
+    )
+
+
+@app.delete("/todos/{todo_id}")
+def remove_todo(todo_id: int):
+
+    for index, todo in enumerate(todo_list):
+        if todo["id"] == todo_id:
+            removed = todo_list.pop(index)
+
+            return {
+                "message": "Todo removed",
+                "data": removed
+            }
+
+    raise HTTPException(
+        status_code=404,
+        detail="Todo not found"
+    )
+```
