@@ -1,79 +1,54 @@
-```python
+
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-app = FastAPI(title="Simple Task API")
+app = FastAPI(title="Task Manager API")
 
 
-class TaskData(BaseModel):
+class Task(BaseModel):
     title: str
     description: str
     completed: bool = False
 
 
-database = []
-
-
-def find_task(task_id: int):
-    for task in database:
-        if task["id"] == task_id:
-            return task
-    return None
+tasks = []
 
 
 @app.get("/")
-def index():
-    return {"message": "Welcome to the Task API"}
+def home():
+    return {"message": "Task Manager API is running!"}
 
 
 @app.get("/tasks")
-def all_tasks():
-    return {"tasks": database}
+def get_tasks():
+    return tasks
 
 
 @app.post("/tasks")
-def add_task(data: TaskData):
-
-    task_id = len(database) + 1
-
-    new_task = {
-        "id": task_id,
-        "title": data.title,
-        "description": data.description,
-        "completed": data.completed
-    }
-
-    database.append(new_task)
-
+def create_task(task: Task):
+    tasks.append(task)
     return {
-        "message": "New task added",
-        "task": new_task
+        "message": "Task created successfully",
+        "task": task
     }
 
 
 @app.get("/tasks/{task_id}")
-def single_task(task_id: int):
+def get_task(task_id: int):
+    if task_id >= len(tasks):
+        return {"error": "Task not found"}
 
-    task = find_task(task_id)
-
-    if task is None:
-        return {"message": "No such task"}
-
-    return task
+    return tasks[task_id]
 
 
 @app.delete("/tasks/{task_id}")
-def remove_task(task_id: int):
+def delete_task(task_id: int):
+    if task_id >= len(tasks):
+        return {"error": "Task not found"}
 
-    task = find_task(task_id)
-
-    if task is None:
-        return {"message": "No such task"}
-
-    database.remove(task)
+    deleted_task = tasks.pop(task_id)
 
     return {
-        "message": "Task removed successfully",
-        "deleted": task
+        "message": "Task deleted successfully",
+        "task": deleted_task
     }
-```
