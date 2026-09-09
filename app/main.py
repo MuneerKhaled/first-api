@@ -1,80 +1,79 @@
 ```python
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from pydantic import BaseModel
 
-app = FastAPI(title="Todo Management API")
+app = FastAPI(title="Simple Task API")
 
 
-class Todo(BaseModel):
+class TaskData(BaseModel):
     title: str
     description: str
     completed: bool = False
 
 
-todo_list = []
-next_id = 1
+database = []
+
+
+def find_task(task_id: int):
+    for task in database:
+        if task["id"] == task_id:
+            return task
+    return None
 
 
 @app.get("/")
-def root():
-    return {"status": "Todo API is working"}
+def index():
+    return {"message": "Welcome to the Task API"}
 
 
-@app.get("/todos")
-def list_todos():
-    return {
-        "total": len(todo_list),
-        "todos": todo_list
+@app.get("/tasks")
+def all_tasks():
+    return {"tasks": database}
+
+
+@app.post("/tasks")
+def add_task(data: TaskData):
+
+    task_id = len(database) + 1
+
+    new_task = {
+        "id": task_id,
+        "title": data.title,
+        "description": data.description,
+        "completed": data.completed
     }
 
-
-@app.post("/todos")
-def add_todo(todo: Todo):
-    global next_id
-
-    new_todo = {
-        "id": next_id,
-        "title": todo.title,
-        "description": todo.description,
-        "completed": todo.completed
-    }
-
-    todo_list.append(new_todo)
-    next_id += 1
+    database.append(new_task)
 
     return {
-        "message": "Todo added",
-        "data": new_todo
+        "message": "New task added",
+        "task": new_task
     }
 
 
-@app.get("/todos/{todo_id}")
-def find_todo(todo_id: int):
+@app.get("/tasks/{task_id}")
+def single_task(task_id: int):
 
-    for todo in todo_list:
-        if todo["id"] == todo_id:
-            return todo
+    task = find_task(task_id)
 
-    raise HTTPException(
-        status_code=404,
-        detail="Todo not found"
-    )
+    if task is None:
+        return {"message": "No such task"}
+
+    return task
 
 
-@app.delete("/todos/{todo_id}")
-def remove_todo(todo_id: int):
+@app.delete("/tasks/{task_id}")
+def remove_task(task_id: int):
 
-    for index, todo in enumerate(todo_list):
-        if todo["id"] == todo_id:
-            removed = todo_list.pop(index)
+    task = find_task(task_id)
 
-            return {
-                "message": "Todo removed",
-                "data": removed
-            }
+    if task is None:
+        return {"message": "No such task"}
 
-    raise HTTPException(
-        status_code=404,
-        detail="Todo not found"
-    )
+    database.remove(task)
+
+    return {
+        "message": "Task removed successfully",
+        "deleted": task
+    }
 ```
